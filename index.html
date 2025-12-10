@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Controle de Finanças</title>
+  
+  <!-- CSS externo -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Controle de Finanças</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Cadastro Financeiro</h2>
+
+      <!-- Salário -->
+      <form id="salaryForm">
+        <label>Salário (R$):</label>
+        <input id="salary" type="number" step="0.01" min="0" required>
+        <button type="submit">Salvar Salário</button>
+      </form>
+
+      <hr>
+
+      <!-- Despesas -->
+      <form id="expenseForm">
+        <h3>Adicionar Despesa</h3>
+        <label>Data:</label>
+        <input id="date" type="date" required>
+
+        <label>Nome:</label>
+        <input id="name" type="text" required>
+
+        <label>Valor (R$):</label>
+        <input id="value" type="number" step="0.01" min="0.01" required>
+
+        <input id="expenseId" type="hidden">
+
+        <button type="submit">Salvar</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Resumo</h2>
+      <p><strong>Salário:</strong> <span id="showSalary">R$ 0,00</span></p>
+      <p><strong>Total de Despesas:</strong> <span id="totalExpenses">R$ 0,00</span></p>
+      <p><strong>Saldo Final:</strong> <span id="balance">R$ 0,00</span></p>
+    </section>
+
+    <section class="card">
+      <h2>Despesas</h2>
+      <p id="empty">Nenhuma despesa cadastrada.</p>
+
+      <table id="expensesTable">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Nome</th>
+            <th>Valor</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- JS externo -->
+  <script src="app.js"></script>
+</body>
+</html>
+''
