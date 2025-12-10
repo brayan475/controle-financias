@@ -1,161 +1,172 @@
+const CHAVE = "meu_controle_financas";
 
-const STORAGE_KEY = "controle_financas_v1";
-
-let state = {
-  salary: 0,
-  expenses: []
+// inicial
+let dados = {
+    salario: 0,
+    despesas: []
 };
 
-// ===== Seletores =====
-const salaryInput = document.getElementById("salary");
-const showSalary = document.getElementById("showSalary");
-const totalExpensesEl = document.getElementById("totalExpenses");
-const balanceEl = document.getElementById("balance");
+// --- PEGANDO OS ELEMENTOS DA TELA ---
+const inpSalario = document.getElementById("salario");
+const textoSalario = document.getElementById("mostrarSalario");
 
-const dateInput = document.getElementById("date");
-const nameInput = document.getElementById("name");
-const valueInput = document.getElementById("value");
-const expenseIdInput = document.getElementById("expenseId");
+const totalDespesas = document.getElementById("totalDespesas");
+const saldoFinal = document.getElementById("saldoFinal");
 
-const expensesTableBody = document.querySelector("#expensesTable tbody");
-const emptyNote = document.getElementById("empty");
+const inpData = document.getElementById("data");
+const inpNome = document.getElementById("nome");
+const inpValor = document.getElementById("valor");
+const inpId = document.getElementById("idDespesa");
 
-// ===== Utilitários =====
-function fmt(n) {
-  return Number(n).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  });
-}
+const tabela = document.querySelector("#tabelaDespesas tbody");
+const msgVazio = document.getElementById("msgVazio");
 
-// ===== Carregar do LocalStorage =====
-function load() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) state = JSON.parse(raw);
-  render();
-}
 
-function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  render();
-}
-
-// ===== Renderização =====
-function render() {
-  showSalary.textContent = fmt(state.salary);
-
-  // Render despesas
-  expensesTableBody.innerHTML = "";
-
-  if (state.expenses.length === 0) {
-    emptyNote.style.display = "block";
-  } else {
-    emptyNote.style.display = "none";
-
-    state.expenses.forEach(exp => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${exp.date}</td>
-        <td>${exp.name}</td>
-        <td>${fmt(exp.value)}</td>
-        <td class="actions">
-          <button onclick="editExpense('${exp.id}')">Editar</button>
-          <button onclick="deleteExpense('${exp.id}')">Excluir</button>
-        </td>
-      `;
-      expensesTableBody.appendChild(tr);
+// formatar em reais
+function dinheiro(n) {
+    return Number(n).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
     });
-  }
-
-  // Total despesas
-  const total = state.expenses.reduce((sum, e) => sum + Number(e.value), 0);
-  totalExpensesEl.textContent = fmt(total);
-
-  // Saldo final
-  balanceEl.textContent = fmt(state.salary - total);
 }
 
-// ===== Salvar salário =====
-document.getElementById("salaryForm").addEventListener("submit", e => {
-  e.preventDefault();
 
-  const value = Number(salaryInput.value);
-  if (isNaN(value) || value < 0) {
-    alert("Informe um salário válido.");
-    return;
-  }
-
-  state.salary = value;
-  save();
-
-  salaryInput.value = "";
-});
-
-// ===== Salvar / Editar despesa =====
-document.getElementById("expenseForm").addEventListener("submit", e => {
-  e.preventDefault();
-
-  const date = dateInput.value;
-  const name = nameInput.value.trim();
-  const value = Number(valueInput.value);
-  const editingId = expenseIdInput.value;
-
-  if (!date || !name || isNaN(value) || value <= 0) {
-    alert("Preencha todos os campos corretamente.");
-    return;
-  }
-
-  if (editingId) {
-    // Editar
-    const item = state.expenses.find(e => e.id === editingId);
-    if (item) {
-      item.date = date;
-      item.name = name;
-      item.value = value;
+// -------------- CARREGAR / SALVAR NO LOCALSTORAGE ----------
+function carregar() {
+    const salvo = localStorage.getItem(CHAVE);
+    if (salvo) {
+        dados = JSON.parse(salvo);
     }
-  } else {
-    // Criar
-    const newExpense = {
-      id: String(Date.now()),
-      date,
-      name,
-      value
-    };
-    state.expenses.push(newExpense);
-  }
+    mostrarNaTela();
+}
 
-  resetExpenseForm();
-  save();
+function salvar() {
+    localStorage.setItem(CHAVE, JSON.stringify(dados));
+    mostrarNaTela();
+}
+
+
+// ----------------------- MOSTRAR TUDO NA TELA ---------------
+function mostrarNaTela() {
+
+    textoSalario.textContent = dinheiro(dados.salario);
+
+    // limpar tabela
+    tabela.innerHTML = "";
+
+    if (dados.despesas.length === 0) {
+        msgVazio.style.display = "block";
+    } else {
+        msgVazio.style.display = "none";
+    }
+
+    // colocar despesas na tabela
+    dados.despesas.forEach(item => {
+        const linha = document.createElement("tr");
+
+        linha.innerHTML = `
+            <td>${item.data}</td>
+            <td>${item.nome}</td>
+            <td>${dinheiro(item.valor)}</td>
+            <td>
+                <button onclick="editarDespesa('${item.id}')">Editar</button>
+                <button onclick="excluirDespesa('${item.id}')">Excluir</button>
+            </td>
+        `;
+
+        tabela.appendChild(linha);
+    });
+
+    const total = dados.despesas.reduce((soma, item) => soma + Number(item.valor), 0);
+
+    totalDespesas.textContent = dinheiro(total);
+    saldoFinal.textContent = dinheiro(dados.salario - total);
+}
+
+
+// --- SALVAR SALÁRIO ---
+document.getElementById("formSalario").addEventListener("submit", e => {
+    e.preventDefault();
+
+    let valor = Number(inpSalario.value);
+
+    if (isNaN(valor) || valor < 0) {
+        alert("Digite um salário válido.");
+        return;
+    }
+
+    dados.salario = valor;
+    salvar();
+
+    inpSalario.value = "";
 });
 
-// ===== Funções auxiliares =====
-function resetExpenseForm() {
-  dateInput.value = "";
-  nameInput.value = "";
-  valueInput.value = "";
-  expenseIdInput.value = "";
+
+// -- SALVAR / EDITAR DESPESA ---
+document.getElementById("formDespesa").addEventListener("submit", e => {
+    e.preventDefault();
+
+    let data = inpData.value;
+    let nome = inpNome.value.trim();
+    let valor = Number(inpValor.value);
+    let idEdicao = inpId.value;
+
+    if (!data || !nome || isNaN(valor) || valor <= 0) {
+        alert("Preencha tudo corretamente.");
+        return;
+    }
+
+    // Se estiver editando
+    if (idEdicao) {
+        let item = dados.despesas.find(d => d.id === idEdicao);
+        if (item) {
+            item.data = data;
+            item.nome = nome;
+            item.valor = valor;
+        }
+    } 
+    // Senão, criar nova
+    else {
+        dados.despesas.push({
+            id: String(Date.now()),
+            data,
+            nome,
+            valor
+        });
+    }
+
+    limparFormulario();
+    salvar();
+});
+
+
+
+function limparFormulario() {
+    inpData.value = "";
+    inpNome.value = "";
+    inpValor.value = "";
+    inpId.value = "";
 }
 
-// ===== Editar despesa =====
-function editExpense(id) {
-  const item = state.expenses.find(e => e.id === id);
-  if (!item) return;
+function editarDespesa(id) {
+    let item = dados.despesas.find(d => d.id === id);
+    if (!item) return;
 
-  dateInput.value = item.date;
-  nameInput.value = item.name;
-  valueInput.value = item.value;
-  expenseIdInput.value = item.id;
+    inpData.value = item.data;
+    inpNome.value = item.nome;
+    inpValor.value = item.valor;
+    inpId.value = item.id;
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// ===== Excluir despesa =====
-function deleteExpense(id) {
-  if (!confirm("Excluir esta despesa?")) return;
+function excluirDespesa(id) {
+    if (!confirm("Deseja excluir a despesa?")) return;
 
-  state.expenses = state.expenses.filter(e => e.id !== id);
-  save();
+    dados.despesas = dados.despesas.filter(d => d.id !== id);
+    salvar();
 }
 
-// ===== Inicialização =====
-load();
+carregar();
+
+
